@@ -1,0 +1,439 @@
+# =============================================================
+#   PARKING LOT SYSTEM — Complete API Flow
+#   Extension: REST Client (by Huachao Mao)
+#   How to run: Click "Send Request" above each request
+#
+#   FLOW ORDER:
+#     PHASE 1 → Super Admin setup (first-time only)
+#     PHASE 2 → Admin creates parking infrastructure
+#     PHASE 3 → User registers, parks, exits, pays
+# =============================================================
+
+@baseUrl = http://localhost:5000/api
+
+
+# =============================================================
+#   PHASE 1: SUPER ADMIN SETUP
+#   Run these once to bootstrap the system
+# =============================================================
+
+### [1.1] Create Super Admin user (first-time only)
+# @name createSuperAdmin
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Super Admin",
+  "email": "superadmin@parking.com",
+  "password": "superadmin123",
+  "role": "SUPER_ADMIN"
+}
+
+### [1.2] Login as Super Admin  ← Run this first, token is auto-captured below
+# @name loginSuperAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@parking.com",
+  "password": "superadmin123"
+}
+
+### --- Token auto-captured from loginSuperAdmin response ---
+@superAdminToken = {{loginSuperAdmin.response.body.data.token}}
+
+### [1.3] Verify Super Admin profile
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{superAdminToken}}
+
+### [1.4] Create an Admin user (only Super Admin can assign ADMIN role)
+# @name createAdmin
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Parking Admin",
+  "email": "admin@parking.com",
+  "password": "admin1234",
+  "role": "ADMIN"
+}
+
+### [1.5] Setup Role Access — SUPER_ADMIN: full access on all resources
+POST {{baseUrl}}/role-access
+Content-Type: application/json
+Authorization: Bearer {{superAdminToken}}
+
+{
+  "role": "SUPER_ADMIN",
+  "resource": "ALL",
+  "actions": ["CREATE", "READ", "UPDATE", "DELETE"]
+}
+
+### [1.6] Setup Role Access — ADMIN: no delete on critical resources
+POST {{baseUrl}}/role-access
+Content-Type: application/json
+Authorization: Bearer {{superAdminToken}}
+
+{
+  "role": "ADMIN",
+  "resource": "ParkingLot",
+  "actions": ["CREATE", "READ", "UPDATE", "DELETE"]
+}
+
+### [1.7] Setup Role Access — USER: read-only on ParkingLot
+POST {{baseUrl}}/role-access
+Content-Type: application/json
+Authorization: Bearer {{superAdminToken}}
+
+{
+  "role": "USER",
+  "resource": "ParkingLot",
+  "actions": ["READ"]
+}
+
+### [1.8] Setup Role Access — USER: read + update on ParkingSpot
+POST {{baseUrl}}/role-access
+Content-Type: application/json
+Authorization: Bearer {{superAdminToken}}
+
+{
+  "role": "USER",
+  "resource": "ParkingSpot",
+  "actions": ["READ", "UPDATE"]
+}
+
+### [1.9] Setup Role Access — USER: no delete on Vehicle/Ticket/Invoice
+POST {{baseUrl}}/role-access
+Content-Type: application/json
+Authorization: Bearer {{superAdminToken}}
+
+{
+  "role": "USER",
+  "resource": "Vehicle",
+  "actions": ["CREATE", "READ", "UPDATE"]
+}
+
+### [1.10] View all role access entries
+GET {{baseUrl}}/role-access
+Authorization: Bearer {{superAdminToken}}
+
+
+# =============================================================
+#   PHASE 2: ADMIN SETS UP PARKING INFRASTRUCTURE
+# =============================================================
+
+### [2.1] Login as Admin  ← Run this, token is auto-captured below
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@parking.com",
+  "password": "admin1234"
+}
+
+### --- Token auto-captured from loginAdmin response ---
+@adminToken = {{loginAdmin.response.body.data.token}}
+
+### [2.2] Create a Parking Lot
+# @name createParkingLot
+POST {{baseUrl}}/parking-lots
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Downtown Parking Plaza",
+  "address": "123 Main Street",
+  "city": "Hyderabad",
+  "totalSpots": 50
+}
+
+### --- Parking Lot ID auto-captured ---
+@parkingLotId = {{createParkingLot.response.body.data._id}}
+
+### [2.3] Get all parking lots (any user can see this)
+GET {{baseUrl}}/parking-lots
+Authorization: Bearer {{adminToken}}
+
+### [2.4] Get a specific parking lot by ID
+GET {{baseUrl}}/parking-lots/{{parkingLotId}}
+Authorization: Bearer {{adminToken}}
+
+### [2.5] Update a parking lot
+PATCH {{baseUrl}}/parking-lots/{{parkingLotId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "totalSpots": 60
+}
+
+### [2.6] Create Parking Spot — TWO_WHEELER
+# @name createSpotTwoWheeler
+POST {{baseUrl}}/parking-spots
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "parkingLotId": "{{parkingLotId}}",
+  "spotNumber": "T-01",
+  "spotType": "TWO_WHEELER"
+}
+
+### --- Spot ID auto-captured ---
+@twoWheelerSpotId = {{createSpotTwoWheeler.response.body.data._id}}
+
+### [2.7] Create Parking Spot — FOUR_WHEELER
+# @name createSpotFourWheeler
+POST {{baseUrl}}/parking-spots
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "parkingLotId": "{{parkingLotId}}",
+  "spotNumber": "F-01",
+  "spotType": "FOUR_WHEELER"
+}
+
+### --- Spot ID auto-captured ---
+@fourWheelerSpotId = {{createSpotFourWheeler.response.body.data._id}}
+
+### [2.8] Create Parking Spot — THREE_WHEELER
+# @name createSpotThreeWheeler
+POST {{baseUrl}}/parking-spots
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "parkingLotId": "{{parkingLotId}}",
+  "spotNumber": "TH-01",
+  "spotType": "THREE_WHEELER"
+}
+
+### [2.9] Get all parking spots (filter by lot)
+GET {{baseUrl}}/parking-spots?parkingLotId={{parkingLotId}}
+Authorization: Bearer {{adminToken}}
+
+### [2.10] Get only available (not occupied) TWO_WHEELER spots
+GET {{baseUrl}}/parking-spots?spotType=TWO_WHEELER&isOccupied=false
+Authorization: Bearer {{adminToken}}
+
+### [2.11] Set Fee for TWO_WHEELER
+# @name feeTwoWheeler
+POST {{baseUrl}}/fees
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "vehicleType": "TWO_WHEELER",
+  "baseFare": 20,
+  "ratePerHour": 10
+}
+
+### [2.12] Set Fee for FOUR_WHEELER
+# @name feeFourWheeler
+POST {{baseUrl}}/fees
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "vehicleType": "FOUR_WHEELER",
+  "baseFare": 50,
+  "ratePerHour": 30
+}
+
+### [2.13] Set Fee for THREE_WHEELER
+POST {{baseUrl}}/fees
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "vehicleType": "THREE_WHEELER",
+  "baseFare": 30,
+  "ratePerHour": 15
+}
+
+### [2.14] View all fee configurations
+GET {{baseUrl}}/fees
+Authorization: Bearer {{adminToken}}
+
+### [2.15] Update a fee (e.g., TWO_WHEELER rate change)
+@feeTwoWheelerId = {{feeTwoWheeler.response.body.data._id}}
+PATCH {{baseUrl}}/fees/{{feeTwoWheelerId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "ratePerHour": 12
+}
+
+
+# =============================================================
+#   PHASE 3: USER — REGISTER, PARK, EXIT, PAY
+# =============================================================
+
+### [3.1] Register a regular user
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Ravi Kumar",
+  "email": "ravi@gmail.com",
+  "password": "ravi1234"
+}
+
+### [3.2] Login as User  ← Run this, token is auto-captured below
+# @name loginUser
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ravi@gmail.com",
+  "password": "ravi1234"
+}
+
+### --- Token auto-captured from loginUser response ---
+@userToken = {{loginUser.response.body.data.token}}
+
+### [3.3] View own profile
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{userToken}}
+
+### [3.4] Register a vehicle (auto-linked to logged-in user)
+# @name registerVehicle
+POST {{baseUrl}}/vehicles
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "licensePlate": "TS09AB1234",
+  "vehicleType": "TWO_WHEELER",
+  "make": "Honda",
+  "model": "Activa",
+  "color": "Red"
+}
+
+### --- Vehicle ID auto-captured ---
+@vehicleId = {{registerVehicle.response.body.data._id}}
+
+### [3.5] View my vehicles
+GET {{baseUrl}}/vehicles/my
+Authorization: Bearer {{userToken}}
+
+### [3.6] View all available TWO_WHEELER spots before parking
+GET {{baseUrl}}/parking-spots?spotType=TWO_WHEELER&isOccupied=false
+Authorization: Bearer {{userToken}}
+
+### [3.7] Create a Ticket — PARK the vehicle
+#   NOTE: vehicleType must match spotType, spot auto-marked as occupied
+# @name createTicket
+POST {{baseUrl}}/tickets
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "vehicleId": "{{vehicleId}}",
+  "parkingSpotId": "{{twoWheelerSpotId}}"
+}
+
+### --- Ticket ID auto-captured ---
+@ticketId = {{createTicket.response.body.data._id}}
+
+### [3.8] View ticket details
+GET {{baseUrl}}/tickets/{{ticketId}}
+Authorization: Bearer {{userToken}}
+
+### [3.9] Verify the spot is now occupied
+GET {{baseUrl}}/parking-spots/{{twoWheelerSpotId}}
+Authorization: Bearer {{userToken}}
+
+### [3.10] Complete the Ticket — EXIT the vehicle
+#   NOTE: spot auto-freed, exitTime auto-set if not provided
+# @name completeTicket
+PATCH {{baseUrl}}/tickets/{{ticketId}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "status": "COMPLETED",
+  "exitTime": "2026-03-22T12:00:00.000Z"
+}
+
+### [3.11] Verify the spot is now free again
+GET {{baseUrl}}/parking-spots/{{twoWheelerSpotId}}
+Authorization: Bearer {{userToken}}
+
+### [3.12] Generate Invoice (auto-calculates: baseFare + hours × ratePerHour)
+#   Formula: baseFare=20, ratePerHour=12, hours parked → total amount
+# @name generateInvoice
+POST {{baseUrl}}/invoices/generate
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "ticketId": "{{ticketId}}"
+}
+
+### --- Invoice ID auto-captured ---
+@invoiceId = {{generateInvoice.response.body.data._id}}
+
+### [3.13] View my invoices
+GET {{baseUrl}}/invoices/my
+Authorization: Bearer {{userToken}}
+
+### [3.14] View a specific invoice
+GET {{baseUrl}}/invoices/{{invoiceId}}
+Authorization: Bearer {{userToken}}
+
+### [3.15] Pay the invoice (mark as PAID)
+PATCH {{baseUrl}}/invoices/{{invoiceId}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "status": "PAID"
+}
+
+
+# =============================================================
+#   ADMIN MANAGEMENT — User & System oversight
+# =============================================================
+
+### [4.1] Admin: View all users
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+
+### [4.2] Admin: View all vehicles
+GET {{baseUrl}}/vehicles
+Authorization: Bearer {{adminToken}}
+
+### [4.3] Admin: View all tickets
+GET {{baseUrl}}/tickets
+Authorization: Bearer {{adminToken}}
+
+### [4.4] Admin: View all invoices
+GET {{baseUrl}}/invoices
+Authorization: Bearer {{adminToken}}
+
+### [4.5] Admin: Update a user
+@userId = {{createUser.response.body.data._id}}
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Ravi Kumar Updated"
+}
+
+### [4.6] Super Admin: Delete parking spot (only if not in use)
+DELETE {{baseUrl}}/parking-spots/{{twoWheelerSpotId}}
+Authorization: Bearer {{superAdminToken}}
+
+### [4.7] Super Admin: Delete parking lot
+DELETE {{baseUrl}}/parking-lots/{{parkingLotId}}
+Authorization: Bearer {{superAdminToken}}
+
+### [4.8] Super Admin: Delete a user
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{superAdminToken}}
