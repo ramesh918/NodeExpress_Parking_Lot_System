@@ -20,8 +20,14 @@ export default function Tickets() {
     setLoading(true)
     try {
       const [ticketsRes, vehiclesRes] = await Promise.all([api.get('/tickets'), api.get('/vehicles/my')])
-      setTickets(ticketsRes.data.data)
-      setMyVehicles(vehiclesRes.data.data)
+      const allVehicles = vehiclesRes.data.data
+      setMyVehicles(allVehicles)
+      if (isAdmin) {
+        setTickets(ticketsRes.data.data)
+      } else {
+        const myVehicleIds = new Set(allVehicles.map((v) => v._id))
+        setTickets(ticketsRes.data.data.filter((t) => myVehicleIds.has(t.vehicleId?._id)))
+      }
     } catch (_) {}
     setLoading(false)
   }
@@ -55,7 +61,8 @@ export default function Tickets() {
       toast('Ticket created — vehicle parked!')
       setModal(null); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }
@@ -63,11 +70,12 @@ export default function Tickets() {
   const handleComplete = async () => {
     setSaving(true)
     try {
-      await api.patch(`/tickets/${selected._id}`, { status: 'COMPLETED', exitTime: new Date().toISOString() })
-      toast('Ticket completed — vehicle exited!')
+      await api.post(`/tickets/${selected._id}/checkout`)
+      toast('Ticket completed — invoice auto-generated!')
       setModal(null); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }
@@ -79,7 +87,8 @@ export default function Tickets() {
       toast('Ticket deleted')
       setModal(null); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Delete failed', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Delete failed', 'error')
     }
     setSaving(false)
   }
@@ -164,7 +173,7 @@ export default function Tickets() {
           footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-warning" onClick={handleComplete} disabled={saving}>{saving ? 'Processing…' : 'Confirm Exit'}</button></>}>
           <p className="confirm-text">Confirm exit for vehicle</p>
           <p className="confirm-highlight">{selected?.vehicleId?.licensePlate}</p>
-          <p className="confirm-text" style={{ marginTop: 8 }}>This will free the spot and mark the ticket as completed. You can then generate an invoice.</p>
+          <p className="confirm-text" style={{ marginTop: 8 }}>This will free the spot, mark the ticket as completed, and auto-generate an invoice.</p>
         </Modal>
       )}
 

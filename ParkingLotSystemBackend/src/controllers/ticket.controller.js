@@ -36,6 +36,15 @@ exports.updateTicket = async (req, res, next) => {
   }
 };
 
+exports.checkoutTicket = async (req, res, next) => {
+  try {
+    const result = await ticketService.checkoutTicket(req.params.id, req.user.id);
+    res.json({ success: true, message: "Checkout successful. Invoice generated.", data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.deleteTicket = async (req, res, next) => {
   try {
     await ticketService.deleteTicket(req.params.id);

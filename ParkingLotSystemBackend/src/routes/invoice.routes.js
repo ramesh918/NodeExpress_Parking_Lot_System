@@ -41,7 +41,14 @@ router.get(
   invoiceController.getInvoiceById
 );
 
-// Any user can update their invoice (e.g., mark as PAID)
+// Dedicated pay endpoint — marks invoice as PAID
+router.post(
+  "/:id/pay",
+  validate(invoiceIdParamSchema, "params"),
+  invoiceController.payInvoice
+);
+
+// Any user can update their invoice (generic patch)
 router.patch(
   "/:id",
   validate(invoiceIdParamSchema, "params"),

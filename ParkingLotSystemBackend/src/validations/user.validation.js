@@ -20,8 +20,8 @@ const createUserSchema = Joi.object({
     "any.required": "Password is required",
   }),
 
-  role: Joi.string().valid("ADMIN", "USER", "SUPER_ADMIN").optional().messages({
-    "any.only": "Role must be ADMIN, USER, or SUPER_ADMIN",
+  role: Joi.string().valid("ADMIN", "USER").optional().messages({
+    "any.only": "Role must be ADMIN, or USER",
   }),
 }).required();
 

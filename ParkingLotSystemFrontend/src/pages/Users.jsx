@@ -8,7 +8,7 @@ const EMPTY = { name: '', email: '', password: '', role: 'USER' }
 const ROLES = ['USER', 'ADMIN', 'SUPER_ADMIN']
 
 export default function Users() {
-  const { isSuperAdmin } = useAuth()
+  const { isAdmin, isSuperAdmin } = useAuth()
   const toast = useToast()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +48,8 @@ export default function Users() {
       }
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }
@@ -60,7 +61,8 @@ export default function Users() {
       toast('User deleted')
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Delete failed', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Delete failed', 'error')
     }
     setSaving(false)
   }
@@ -80,7 +82,7 @@ export default function Users() {
           <h2 className="page-title">Users</h2>
           <p className="page-subtitle">{counts.total} total — {counts.superAdmin} Super Admin, {counts.admin} Admin, {counts.user} User</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate}>+ Add User</button>
+        {isAdmin && <button className="btn btn-primary" onClick={openCreate}>+ Add User</button>}
       </div>
 
       <div className="filter-bar">
@@ -115,7 +117,7 @@ export default function Users() {
                     <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td>
                       <div className="actions-cell">
-                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>✏ Edit</button>
+                        {isAdmin && <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>✏ Edit</button>}
                         {isSuperAdmin && <button className="btn btn-danger btn-sm" onClick={() => openDelete(u)}>🗑</button>}
                       </div>
                     </td>
@@ -155,7 +157,7 @@ export default function Users() {
           <div className="form-group">
             <label className="form-label">Role</label>
             <select className="form-control" value={form.role} onChange={set('role')}>
-              {(isSuperAdmin ? ROLES : ['USER', 'ADMIN']).map((r) => (
+              {(isSuperAdmin ? ROLES : ['USER']).map((r) => (
                 <option key={r} value={r}>{r.replace('_', ' ')}</option>
               ))}
             </select>

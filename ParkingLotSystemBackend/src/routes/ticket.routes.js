@@ -30,7 +30,14 @@ router.get(
   ticketController.getTicketById
 );
 
-// Any user can update a ticket (e.g., mark exit)
+// Checkout: exit the vehicle + auto-generate invoice in one step
+router.post(
+  "/:id/checkout",
+  validate(ticketIdParamSchema, "params"),
+  ticketController.checkoutTicket
+);
+
+// Any user can update a ticket (e.g., mark exit manually)
 router.patch(
   "/:id",
   validate(ticketIdParamSchema, "params"),

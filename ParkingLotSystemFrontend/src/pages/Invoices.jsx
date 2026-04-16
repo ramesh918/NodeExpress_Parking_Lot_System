@@ -19,14 +19,19 @@ export default function Invoices() {
     setLoading(true)
     try {
       const url = isAdmin ? '/invoices' : '/invoices/my'
-      const [invRes, ticketRes] = await Promise.all([api.get(url), api.get('/tickets')])
+      const requests = [api.get(url), api.get('/tickets')]
+      if (!isAdmin) requests.push(api.get('/vehicles/my'))
+      const [invRes, ticketRes, vehiclesRes] = await Promise.all(requests)
       setInvoices(invRes.data.data)
       const invoicedTicketIds = invRes.data.data.map((i) => i.ticketId?._id || i.ticketId)
-      setCompletedTickets(
-        ticketRes.data.data.filter(
-          (t) => t.status === 'COMPLETED' && !invoicedTicketIds.includes(t._id)
-        )
+      let completed = ticketRes.data.data.filter(
+        (t) => t.status === 'COMPLETED' && !invoicedTicketIds.includes(t._id)
       )
+      if (!isAdmin && vehiclesRes) {
+        const myVehicleIds = new Set(vehiclesRes.data.data.map((v) => v._id))
+        completed = completed.filter((t) => myVehicleIds.has(t.vehicleId?._id))
+      }
+      setCompletedTickets(completed)
     } catch (_) {}
     setLoading(false)
   }
@@ -42,7 +47,8 @@ export default function Invoices() {
       setTicketId('')
       load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }
@@ -50,12 +56,13 @@ export default function Invoices() {
   const handlePay = async () => {
     setSaving(true)
     try {
-      await api.patch(`/invoices/${selected._id}`, { status: 'PAID' })
+      await api.post(`/invoices/${selected._id}/pay`)
       toast('Invoice marked as Paid!')
       setModal(null)
       load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Failed', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Failed', 'error')
     }
     setSaving(false)
   }
@@ -68,7 +75,8 @@ export default function Invoices() {
       setModal(null)
       load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Delete failed', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Delete failed', 'error')
     }
     setSaving(false)
   }

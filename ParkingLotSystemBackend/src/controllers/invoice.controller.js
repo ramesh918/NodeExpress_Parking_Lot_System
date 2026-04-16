@@ -57,6 +57,15 @@ exports.updateInvoice = async (req, res, next) => {
   }
 };
 
+exports.payInvoice = async (req, res, next) => {
+  try {
+    const invoice = await invoiceService.updateInvoice(req.params.id, { status: "PAID" });
+    res.json({ success: true, message: "Payment successful. Invoice marked as PAID.", data: invoice });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.deleteInvoice = async (req, res, next) => {
   try {
     await invoiceService.deleteInvoice(req.params.id);

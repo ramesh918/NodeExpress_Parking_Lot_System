@@ -2,10 +2,13 @@ const Joi = require("joi");
 
 const VEHICLE_TYPES = ["TWO_WHEELER", "THREE_WHEELER", "FOUR_WHEELER"];
 
+const mongoId = Joi.string().trim().pattern(/^[0-9a-fA-F]{24}$/);
+
 const createParkingSpotSchema = Joi.object({
-  parkingLotId: Joi.string().trim().required().messages({
+  parkingLotId: mongoId.required().messages({
     "string.empty": "Parking lot id is required",
     "any.required": "Parking lot id is required",
+    "string.pattern.base": "parkingLotId must be a valid MongoDB ObjectId",
   }),
 
   spotNumber: Joi.string().trim().required().messages({

@@ -49,7 +49,8 @@ export default function Fees() {
       }
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }

@@ -47,7 +47,8 @@ export default function Vehicles() {
       }
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }
@@ -59,7 +60,8 @@ export default function Vehicles() {
       toast('Vehicle deleted')
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Delete failed', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Delete failed', 'error')
     }
     setSaving(false)
   }

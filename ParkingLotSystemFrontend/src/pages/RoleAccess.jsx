@@ -4,7 +4,7 @@ import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 
 const ROLES = ['SUPER_ADMIN', 'ADMIN', 'USER']
-const RESOURCES = ['User', 'RoleAccess', 'ParkingLot', 'ParkingSpot', 'Vehicle', 'Ticket', 'Fee', 'Invoice']
+const RESOURCES = ['PARKINGLOT', 'PARKINGSPOT', 'VEHICLE', 'TICKET', 'INVOICE', 'FEE']
 const ACTIONS = ['CREATE', 'READ', 'UPDATE', 'DELETE']
 const EMPTY = { role: '', resource: '', actions: [] }
 
@@ -55,7 +55,8 @@ export default function RoleAccess() {
       }
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Something went wrong', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Something went wrong', 'error')
     }
     setSaving(false)
   }
@@ -67,7 +68,8 @@ export default function RoleAccess() {
       toast('Role access entry deleted')
       closeModal(); load()
     } catch (err) {
-      toast(err.response?.data?.message || 'Delete failed', 'error')
+      const d = err.response?.data
+      toast(d?.details?.[0] || d?.message || 'Delete failed', 'error')
     }
     setSaving(false)
   }

@@ -3,13 +3,23 @@ const router = express.Router();
 
 const userController = require("../controllers/user.controller");
 const validate = require("../middleware/validate.middleware");
+const authMiddleware = require("../middleware/authentication.middleware");
+const { authorize } = require("../middleware/authorization.middleware");
 const {
   createUserSchema,
   updateUserSchema,
   userIdParamSchema,
 } = require("../validations/user.validation");
 
-router.post("/", validate(createUserSchema), userController.createUser);
+// SUPER_ADMIN → can create USER or ADMIN
+// ADMIN       → can create USER only (enforced in controller)
+router.post(
+  "/",
+  authMiddleware,
+  authorize("SUPER_ADMIN", "ADMIN"),
+  validate(createUserSchema),
+  userController.createUser
+);
 
 router.get("/", userController.getUsers);
 

@@ -26,14 +26,14 @@ router.get(
 // Only roles with the matching RoleAccess entry can create, update, delete
 router.post(
   "/",
-  authorizeResource("PARKING_LOT", "CREATE"),
+  authorizeResource("PARKINGLOT", "CREATE"),
   validate(createParkingLotSchema),
   parkingLotController.createParkingLot
 );
 
 router.patch(
   "/:id",
-  authorizeResource("PARKING_LOT", "UPDATE"),
+  authorizeResource("PARKINGLOT", "UPDATE"),
   validate(parkingLotIdParamSchema, "params"),
   validate(updateParkingLotSchema),
   parkingLotController.updateParkingLot
@@ -41,7 +41,7 @@ router.patch(
 
 router.delete(
   "/:id",
-  authorizeResource("PARKING_LOT", "DELETE"),
+  authorizeResource("PARKINGLOT", "DELETE"),
   validate(parkingLotIdParamSchema, "params"),
   parkingLotController.deleteParkingLot
 );
